@@ -2621,12 +2621,17 @@ object PlayBigDecimal{
 //val context = new AssignementLevel(process.nodes.map(n => AssignementLevelCmd(n,n.getInput(0))))
 
 object PlaySwitchEmit{
+
+  object State extends SpinalEnum{
+    val A,B,C,D = newElement
+  }
   class TopLevel extends Component {
-    val sel = in UInt(2 bits)
+    val sel = in Bits(2 bits)
     val x,y,z = out UInt(8 bits)
 
     x := 0
     y := 0
+//    z := 10
     switch(sel){
       is(0) {
         x := 1
@@ -2641,10 +2646,38 @@ object PlaySwitchEmit{
         z := 2
       }
       is(3){
+//      default{
         y := 1
         z := 3
       }
     }
+
+
+    val state = in(State())
+    val l,m = out UInt(8 bits)
+
+    switch(state){
+      is(State.A){
+        l := 0
+      }
+      is(State.B){
+        l := 1
+      }
+      is(State.C){
+        l := 2
+      }
+      is(State.D){
+        l := 3
+      }
+    }
+
+    m := state.mux[UInt](
+      State.A -> "x00",
+      State.B -> "x11",
+      State.C -> "X22",
+      State.D -> "X33"
+    )
+
   }
 
   def main(args: Array[String]) {

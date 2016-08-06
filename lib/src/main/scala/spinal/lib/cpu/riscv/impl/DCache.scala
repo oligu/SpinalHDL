@@ -161,7 +161,7 @@ class DataCache(implicit p : DataCacheConfig) extends Component{
 
   val ways = Array.tabulate(wayCount)(id => new Area{
     val tags = Mem(new LineInfo(),wayLineCount)
-    val data = Mem(Bits(wordWidth bit),wayWordCount) //TODO write mask
+    val data = Mem(Bits(wordWidth bit),wayWordCount)
 
     when(tagsWriteCmd.valid && tagsWriteCmd.way === id){
       tags(tagsWriteCmd.address) := tagsWriteCmd.data
