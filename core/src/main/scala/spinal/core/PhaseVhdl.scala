@@ -605,6 +605,18 @@ class PhaseVhdl(pc : PhaseContext) extends PhaseMisc with VhdlBase {
 
 
   def emitArchitecture(component: Component, builder: ComponentBuilder): Unit = {
+//    val buffer = ArrayBuffer[AssignementLevelCmd]()
+//    for(node <- component.nodes){
+//      node match{
+//        case node : BaseType => {
+//          if( (!((node.isIo && node.isInput) || component.kindsOutputsBindings.contains(node))))
+//            buffer += AssignementLevelCmd(node,node.getInput(0))
+//        }
+//        case _ =>
+//      }
+//    }
+//    val context = new AssignementLevel(buffer)
+
     var ret = builder.newPart(false)
     val wrappedIo = if (config.onlyStdLogicVectorAtTopLevelIo && component == topLevel) ioStdLogicVectorWrapNames() else HashMap[BaseType, WrappedStuff]()
     ret ++= s"architecture arch of ${component.definitionName} is\n"
@@ -678,7 +690,7 @@ class PhaseVhdl(pc : PhaseContext) extends PhaseMisc with VhdlBase {
           case i: Int => ret ++= s"      $name : integer;\n"
           case d: Double => ret ++= s"      $name : real;\n"
           case b: Boolean => ret ++= s"      $name : boolean;\n"
-          case b: STime => ret ++= s"      $name : time;\n"
+//          case b: STime => ret ++= s"      $name : time;\n"
         }
       }
 
@@ -1612,10 +1624,10 @@ class PhaseVhdl(pc : PhaseContext) extends PhaseMisc with VhdlBase {
               case i: Int => ret ++= s"      ${name} => $i,\n"
               case d: Double => ret ++= s"      ${name} => $d,\n"
               case b: Boolean => ret ++= s"      ${name} => $b,\n"
-              case t: STime => {
-                val d = t.decompose
-                ret ++= s"      ${name} => ${d._1} ${d._2},\n"
-              }
+//              case t: STime => {
+//                val d = t.decompose
+//                ret ++= s"      ${name} => ${d._1} ${d._2},\n"
+//              }
             }
           }
           ret.setCharAt(ret.size - 2, ' ')

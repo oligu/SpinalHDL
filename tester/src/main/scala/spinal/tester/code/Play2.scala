@@ -2596,3 +2596,103 @@ object PlayRegTriplify{
   }
 }
 
+object PlayBigDecimal{
+  def main(args: Array[String]) {
+    val a = BigDecimal(1)
+    val b = BigDecimal(3)
+
+    val x = a/b
+
+
+
+    import spinal.core._
+    val frequency = 100 MHz
+    val periode = 100 us
+    val cycles = frequency*periode
+    println(cycles)
+
+    val timeoutLimit = 3 mn
+    val timeoutCycles = frequency*timeoutLimit
+    println(timeoutCycles)
+
+
+  }
+}
+//val context = new AssignementLevel(process.nodes.map(n => AssignementLevelCmd(n,n.getInput(0))))
+
+object PlaySwitchEmit{
+  class TopLevel extends Component {
+    val sel = in UInt(2 bits)
+    val x,y,z = out UInt(8 bits)
+
+    x := 0
+    y := 0
+    switch(sel){
+      is(0) {
+        x := 1
+        z := 0
+      }
+      is(1){
+        y := 1
+        z := 1
+      }
+      is(2){
+        y := 1
+        z := 2
+      }
+      is(3){
+        y := 1
+        z := 3
+      }
+    }
+  }
+
+  def main(args: Array[String]) {
+    SpinalConfig().generateVhdl(new TopLevel)
+  }
+}
+
+
+object PlayBufferCC{
+  class TopLevel extends Component {
+    val input = in Bits(8 bits)
+    val output = out Bits(8 bits)
+    output := BufferCC(input)
+  }
+
+  def main(args: Array[String]) {
+    SpinalConfig().generateVhdl(new TopLevel).printPruned()
+  }
+}
+
+
+
+object MemTest2 {
+
+  class TopLevel extends Component{
+
+    val io = new Bundle{
+      val rw      = in Bool
+      val cs      = in Bool
+      val dataIn  = in Bits(8 bits)
+      val addr    = in UInt(8 bits)
+      val dataOut = out Bits(8 bits)
+    }
+
+    val memory = Mem(Bits(8 bits), 255)
+    io.dataOut := 0
+
+    when(io.cs){
+      when(io.rw){
+        memory(io.addr) := io.dataIn
+      }otherwise{
+        io.dataOut := memory.readSync(address = io.addr)
+      }
+    }
+
+      memory.generateAsBlackBox()
+  }
+  def main(args:Array[String]){
+    SpinalConfig(mode=VHDL).addStandardMemBlackboxing(blackboxOnlyIfRequested).generate(new TopLevel).printPruned()
+  }
+}

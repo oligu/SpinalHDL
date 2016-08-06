@@ -480,11 +480,14 @@ class PhaseMemBlackBoxingDefault(policy : MemBlackboxingPolicy) extends PhaseMem
         val wr = topo.readWriteSync(0)._1
         val rd = topo.readWriteSync(0)._2
 
+        wr.checkInferedWidth
+        rd.checkInferedWidth
+
         val ram = new Ram_1wrs(mem.getWidth, mem.wordCount,mem.technology, rd.readUnderWrite)
 
         ram.io.addr := wr.getAddress.allowSimplifyIt()
         ram.io.en := wr.getChipSelect.allowSimplifyIt() && wr.getClockDomain.isClockEnableActive
-        ram.io.we := wr.getWriteEnable.allowSimplifyIt()
+        ram.io.wr := wr.getWriteEnable.allowSimplifyIt()
         ram.io.wrData := wr.getData.allowSimplifyIt()
 
         rd.getData.allowSimplifyIt() := ram.io.rdData
@@ -496,6 +499,13 @@ class PhaseMemBlackBoxingDefault(policy : MemBlackboxingPolicy) extends PhaseMem
 
         val portB_wr = topo.readWriteSync(1)._1
         val portB_rd = topo.readWriteSync(1)._2
+
+        portA_wr.checkInferedWidth
+        portA_rd.checkInferedWidth
+
+        portB_wr.checkInferedWidth
+        portB_rd.checkInferedWidth
+
 
         val ram = new Ram_2wrs(
           wordWidth = mem.getWidth,
@@ -1386,6 +1396,32 @@ class PhasePrintUnUsedSignals(prunedSignals : mutable.Set[BaseType])(pc: PhaseCo
     }
   }
 }
+
+//class PhaseCompletSwitchCases extends PhaseCheck{
+//  override def useNodeConsumers = false
+//  override def impl(pc : PhaseContext): Unit = {
+//    import pc._
+//
+//    def walkAssignementTree(output : BaseType,node : Node): Unit = node match {
+//      case node : MultipleAssignmentNode => node.onEachInput(input => walkAssignementTree(output,input))
+//      case node : Reg => {
+//        walkAssignementTree(output,node.dataInput)
+//        walkAssignementTree(output,node.initialValue)
+//      }
+//      case node : WhenNode => {
+//
+//      }
+//      case _ =>
+//    }
+//
+//    Node.walk(walkNodesDefautStack,_ match{
+//      case baseType : BaseType => {
+//        walkAssignementTree(baseType,baseType.input)
+//      }
+//    })
+//
+//  }
+//}
 
 class PhaseAddNodesIntoComponent(pc: PhaseContext) extends PhaseMisc{
   override def useNodeConsumers = false
