@@ -709,21 +709,27 @@ object Sel{
 }
 
 object SpinalMap {
-  def apply[K <: Data, T <: Data](addr: K, default: T, mappings: (Any, T)*): T = list(addr,default,mappings)
   def apply[K <: Data, T <: Data](addr: K, mappings: (Any, T)*): T = list(addr,mappings)
 
-  def list[K <: Data, T <: Data](addr: K, defaultValue: T, mappings: Seq[(Any, T)]): T = {
-    val result : T = defaultValue.clone
+  def list[K <: Data, T <: Data](addr: K, mappings: Seq[(Any, T)]): T = {
+    val result : T = cloneOf(mappings.head._2)
+    result.flatten.foreach(_ match {
+      case bv : BitVector => bv.unsetWidth()
+      case _ =>
+    })
 
     switch(addr){
       for ((cond, value) <- mappings) {
         cond match {
           case product : Product => {
-            //  for(cond <- product.productIterator){
             is.list(product.productIterator) {
               result := value
             }
-            //   }
+          }
+          case `default` => {
+            default{
+              result := value
+            }
           }
           case _ => {
             is(cond) {
@@ -732,18 +738,11 @@ object SpinalMap {
           }
         }
       }
-      default{
-        result := defaultValue
-      }
     }
     result
   }
 
-  def list[K <: Data, T <: Data](addr: K, mappings: Seq[(Any, T)]): T = {
-    val defaultValue = mappings.find(_._1 == default)
-    if(!defaultValue.isDefined) new Exception("No default element in SpinalMap (default -> xxx)")
-    list(addr,defaultValue.get._2,mappings.filter(_._1 != default))
-  }
+
 }
 
 //TODO DOC

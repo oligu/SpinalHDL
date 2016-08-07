@@ -1404,24 +1404,55 @@ class PhaseCompletSwitchCases extends PhaseCheck{
   override def impl(pc : PhaseContext): Unit = {
     import pc._
 
+//    object Exclusion{
+//      def apply(size : BigInt) : Exclusion = {
+//        new ExclusionByArray((size.toInt)
+//      }
+//    }
+//
+//    abstract class Exclusion(val size : BigInt){
+//      def isFull() : Boolean
+//      def allocate(id : BigInt): Exclusion
+//      def isBusy(id : BigInt) : Boolean
+//    }
+//
+////    class ExclusionByNothing(size : Int) extends Exclusion(size){ //TODO better than nothing
+////      override def allocate(id: BigInt): Exclusion = this
+////      def isBusy(id : BigInt) : Boolean = false
+////    }
+//
+//    class ExclusionByArray(size : BigInt) extends Exclusion(size){
+//      val occupancy = BigInt
+//
+//      def allocate(id : BigInt): Boolean ={
+//        if(id >= size){
+//          println("asdads")
+//        }
+//        if(occupancy(id.toInt)) return false
+//        occupancy(id.toInt) = true
+//        remaining -= 1
+//        return true
+//      }
+//    }
+
     object Exclusion{
-      def apply(size : Int) : Exclusion = {
+      def apply(size : BigInt) : Exclusion = {
         if(size < 4096) new ExclusionByArray((size))
         else new ExclusionByNothing(size)
       }
     }
 
-    abstract class Exclusion(val size : Int){
+    abstract class Exclusion(val size : BigInt){
       var remaining = size
       def allocate(id : Int): Boolean
     }
 
-    class ExclusionByNothing(size : Int) extends Exclusion(size){ //TODO better than nothing
-      override def allocate(id: Int): Boolean = true
+    class ExclusionByNothing(size : BigInt) extends Exclusion(size){ //TODO better than nothing
+    override def allocate(id: Int): Boolean = true
     }
 
-    class ExclusionByArray(size : Int) extends Exclusion(size){
-      val occupancy = new Array[Boolean](size)
+    class ExclusionByArray(size : BigInt) extends Exclusion(size){
+      val occupancy = new Array[Boolean](size.toInt)
 
       def allocate(id : Int): Boolean ={
         if(occupancy(id)) return false
@@ -1443,7 +1474,7 @@ class PhaseCompletSwitchCases extends PhaseCheck{
               op.left match {
                 case bt: BitVector => {
                   val value = op.right match {
-                    case lit: SIntLiteral => lit.value + (BigInt(1) << (output.getBitsWidth - 1))
+                    case lit: SIntLiteral => lit.value + (BigInt(1) << (op.right.getWidth - 1))
                     case lit: BitVectorLiteral => {
                       lit.value
                     }
@@ -1452,7 +1483,7 @@ class PhaseCompletSwitchCases extends PhaseCheck{
                     }
                   }
                   if (!excludedOut.contains(bt)) {
-                    excludedOut += (bt -> Exclusion(1 << bt.getWidth))
+                    excludedOut += (bt -> Exclusion(BigInt(1) << bt.getWidth))
                   }
                   val hit = excludedOut(bt)
                   if (!hit.allocate(value.toInt)) {
@@ -1460,6 +1491,9 @@ class PhaseCompletSwitchCases extends PhaseCheck{
                   }
                   if (hit.remaining == 0) {
                     previous.setInput(previousId, node.whenTrue)
+                    if(node.whenTrue == null){
+                      println("yolo")
+                    }
                   }
                 }
                 case _ =>
@@ -1479,6 +1513,9 @@ class PhaseCompletSwitchCases extends PhaseCheck{
                 }
                 if (hit.remaining == 0) {
                   previous.setInput(previousId, node.whenTrue)
+                  if(node.whenTrue == null){
+                    println("yolo")
+                  }
                 }
               }
               case _ =>
@@ -1839,7 +1876,7 @@ object SpinalVerilogBoot{
     phases += new PhaseDontSymplifyBasetypeWithComplexAssignement(pc)
     phases += new PhaseDontSymplifyVerilogMismatchingWidth(pc)    //VERILOG
     phases += new PhaseDeleteUselessBaseTypes(pc)
-    
+
     phases += new PhaseCompletSwitchCases
 
     phases += new PhaseDummy(SpinalProgress("Check that there is no incomplete assignment"))
