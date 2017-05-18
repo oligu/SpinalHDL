@@ -173,7 +173,34 @@ class Titi[A <: Int]() {
 
 }
 
+object miaou{
+  class CarryAdder(size : Int) extends Component{
+    val io = new Bundle{
+      val a = in UInt(size bits)
+      val b = in UInt(size bits)
+      val result = out UInt(size bits)      //result = a + b
+    }
 
+    var c = False                   //Carry, like a VHDL variable
+    val loopStuff = for (i <- 0 until size)  yield new Area{
+      //Create some intermediate value in the loop scope.
+      val a = io.a(i)
+      val b = io.b(i)
+
+      //The carry adder's asynchronous logic
+      io.result(i) := a ^ b ^ c
+      c = (a & b) | (a & c) | (b & c);    //variable assignment
+    }
+  }
+
+
+  object CarryAdderProject {
+
+  }
+  def main(args: Array[String]) {
+    SpinalVhdl(new CarryAdder(4))
+  }
+}
 object Yolo {
 
   class C2 {
@@ -306,6 +333,16 @@ object PlayFifo {
     SpinalVhdl(new TopLevel())
   }
 }
+
+object PlayShiftWidth{
+  class TopLevel extends Component{
+    val output = out(in(Bits(8 bits)) & (in(Bits(8 bits)) |<< in(UInt(3 bits))))
+  }
+  def main(args: Array[String]): Unit = {
+    SpinalVerilog(new TopLevel())
+  }
+}
+
 
 object PlayCheckBundles {
   class TopLevel extends Component{
@@ -865,6 +902,10 @@ object PlayBug {
     lut5Inst.io.I3 <> io.I3
     lut5Inst.io.I4 <> io.I4
     lut5Inst.io.O  <> io.O
+
+
+    val a,b = UInt(32 bits)
+    (0 to 31).map(bitId => a(bitId) ? (b << bitId) | U(0)).reduce(_ + _)
   }
 
   def main(args: Array[String]): Unit = {
@@ -1012,27 +1053,31 @@ object PlaySwitch {
 
   class TopLevel extends Component {
     val a, b = in UInt (4 bit)
-    val result = out UInt (4 bit)
+    val result,result2 = out UInt (4 bit)
     result := 1
+    result2 := 1
     switch(a) {
-      is(1) {
-
+//      is(U(1)) {
+//
+//      }
+//      is(U(2)) {
+//
+//        result2 := 4
+//        result := 2
+//      }
+      is(U(3)) {
+        result2 := 4
       }
-      is(2) {
-
-      }
-      is(3) {
-
-      }
-      is(4) {
-        result := 2
-      }
+//      is(U(4)) {
+//        result := 2
+//      }
     }
 
   }
 
   def main(args: Array[String]): Unit = {
     SpinalVhdl(new TopLevel)
+    SpinalVerilog(new TopLevel)
   }
 }
 

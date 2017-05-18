@@ -728,11 +728,11 @@ abstract class Node extends ContextUser with ScalaLocated with SpinalTagReady wi
 
 
 
-class NoneNode extends NodeWithoutInputs {
-  override private[core] def getOutToInUsage(inputId: Int, outHi: Int, outLo: Int): (Int, Int) = (-1,0)
-
-  override def addAttribute(attribute: Attribute): this.type = addTag(attribute)
-}
+//class NoneNode extends NodeWithoutInputs {
+//  override private[core] def getOutToInUsage(inputId: Int, outHi: Int, outLo: Int): (Int, Int) = (-1,0)
+//
+//  override def addAttribute(attribute: Attribute): this.type = addTag(attribute)
+//}
 
 
 

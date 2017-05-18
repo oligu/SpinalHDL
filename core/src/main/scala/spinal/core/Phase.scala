@@ -1026,6 +1026,16 @@ class PhasePropagateBaseTypeWidth(pc: PhaseContext) extends PhaseMisc{
                 walk(that,1)
                 walk(that,2)
               }
+              case that: SwitchNodeWidthable => {
+                that.inferredWidth = width
+                for(i <- 0 until that.cases.length){
+                  walk(that,i + 1)
+                }
+              }
+              case that: CaseNodeWidthable => {
+                that.inferredWidth = width
+                walk(that,1)
+              }
               case that: MultipleAssignmentNodeWidthable => {
                 that.inferredWidth = width
                 walkChildren()

@@ -75,7 +75,7 @@ object BaseType {
         man.setAssignementContext(0,consumer.asInstanceOf[AssignementTreePart].getAssignementContext(consumerInputId))
       }
       //To be sure that there is basetype to bufferise (for future resize)
-      if (that.isInstanceOf[WhenNode] || that.isInstanceOf[BaseType] || that.isInstanceOf[AssignementNode] ||
+      if (that.isInstanceOf[WhenNode] || that.isInstanceOf[SwitchNode] || that.isInstanceOf[BaseType] || that.isInstanceOf[AssignementNode] ||
           that.isInstanceOf[MultipleAssignmentNode] || that.isInstanceOf[Reg]) {
         man.inputs += that.asInstanceOf[man.T]
       } else {
@@ -119,6 +119,67 @@ object BaseType {
             }
 
             consumerInputId = if (when.isTrue) 1 else 2
+          }
+          case context: SwitchContext => {
+            def newSwitchNode() = context.value match {
+              case _ : BitVector => {
+                val switchNode = new SwitchNodeWidthable(context)
+                switchNode.key = context.value.asInstanceOf[switchNode.K] //TODO
+                switchNode
+              }
+            }
+            consumer.getInput(consumerInputId) match {
+              case null => {
+                val switchNode = newSwitchNode()
+                consumer.setInput(consumerInputId, switchNode)
+                consumer = switchNode
+              }
+              case man: MultipleAssignmentNode => {
+                man.inputs.last match {
+                  case currentContext: SwitchNode if currentContext.context == context => consumer = currentContext
+                  case _ => {
+                    val switchNode = newSwitchNode()
+                    man.inputs += switchNode.asInstanceOf[man.T]
+                    consumer = switchNode
+                  }
+                }
+              }
+              case currentContext: SwitchNode if currentContext.context == context => consumer = currentContext
+              case that => {
+                val man = MultipleAssignmentNode.newFor(baseType)
+                val switchNode = newSwitchNode()
+                initMan(man, that)
+                man.inputs += switchNode.asInstanceOf[man.T]
+                consumer.setInput(consumerInputId,man)
+                consumer = switchNode
+              }
+            }
+          }
+
+          case context: CaseContext => {
+            val switchNode = consumer.asInstanceOf[SwitchNode]
+            def newCaseNode() = switchNode.context.value match {
+              case _ : BitVector => {
+                val caseNode = new CaseNodeWidthable(context)
+                caseNode.cond = context.cond
+                caseNode
+              }
+            }
+            if(switchNode.cases.isEmpty){
+              val caseNode = newCaseNode()
+              switchNode.cases += caseNode.asInstanceOf[switchNode.T]
+              consumer = caseNode
+            }else{
+              val last = switchNode.cases.last
+              if(last.context != context){
+                val caseNode = newCaseNode()
+                switchNode.cases += caseNode.asInstanceOf[switchNode.T]
+                consumer = caseNode
+              }else{
+                consumer = last
+              }
+            }
+            consumerInputId = 1
           }
         }
       }
